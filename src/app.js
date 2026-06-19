@@ -16,4 +16,18 @@ app.use(express.urlencoded({limit: "16kb", extended: true}));//to decode url enc
 app.use(express.static("public"));//to save static files in public folder
 app.use(cookieParser());//to access server side cookies in client side code
 
+//routes import
+
+import userRouter from "./routes/user.routes.js";
+
+
+
+//routes declaration
+app.use("/api/v1/users",userRouter);
+
+
+
+//https://localhost:8000/users/register
+//https://localhost:8000/users/login
+
 export {app};
