@@ -3,6 +3,8 @@ import {ApiError} from "../utils/ApiError.js";
 import {User} from "../models/user.model.js";
 import {uploadOnCloudinary} from "../utils/cloudinary.js";
 import {ApiResponse} from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -123,7 +125,8 @@ const loginUser = asyncHandler(async (req, res) => {
 const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(req.user._id,{
         $set:{
-            refreshToken:undefined,
+            refreshToken:1,//this removes the field from document 
+
         }
     },{
         returnDocument:"after",
@@ -182,9 +185,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
     const {oldPassword,newPassword} = req.body;
-    const user=User.findById(req.user?._id);
-    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
-    if(!isPasswordCorrect){
+    const user=await User.findById(req.user?._id);
+    const isPasswordValid = await user.isPasswordCorrect(oldPassword);
+    if(!isPasswordValid){
         throw new ApiError(400,"Invalid old password");
     }
 
@@ -356,7 +359,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     const user=await User.aggregate([
         {
             $match:{
-                _id:new Mongoose.Types.ObjectId(req.user?._id),
+                _id:new mongoose.Types.ObjectId(req.user?._id),
             }
         },
         {
@@ -372,7 +375,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
                             localField:"owner",
                             foreignField:"_id",
                             as:"owner",
-                            pipleline:[
+                            pipeline:[
                                 {
                                     $project:{
                                         fullname:1,
